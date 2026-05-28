@@ -129,9 +129,16 @@ namespace AngelArena.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            EditorUtility.DisplayDialog("Enemy Setup",
-                $"Created {created} enemy assets/prefabs!\n\n" +
-                "Assign them in the EnemySpawner component\n(enemyPools and bossPools arrays)", "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("Enemy Setup",
+                    $"Created {created} enemy assets/prefabs!\n\n" +
+                    "Assign them in the EnemySpawner component\n(enemyPools and bossPools arrays)", "OK");
+            }
+            else
+            {
+                Debug.Log($"[EnemySetupCreator] Created {created} enemy assets/prefabs!");
+            }
         }
 
         private static GameObject BuildEnemyHealthBar(GameObject parent)

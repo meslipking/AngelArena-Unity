@@ -47,7 +47,8 @@ namespace AngelArena.Editor
         [MenuItem("AngelArena/AUTO SETUP (Run All Steps)")]
         public static void RunFullSetup()
         {
-            EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Registering tags...", 0.1f);
+            if (!Application.isBatchMode)
+                EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Registering tags...", 0.1f);
             try
             {
                 // Step 1: Register tags
@@ -70,22 +71,26 @@ namespace AngelArena.Editor
                 PlayerSettings.defaultScreenWidth  = 1920;
                 PlayerSettings.defaultScreenHeight = 1080;
 
-                EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Creating enemy prefabs...", 0.3f);
+                if (!Application.isBatchMode)
+                    EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Creating enemy prefabs...", 0.3f);
 
                 // Step 4: Create enemy data & prefabs (recreate to fix PPU)
                 EnemySetupCreator.CreateEnemyAssetsAndPrefabs();
 
-                EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Building scene...", 0.55f);
+                if (!Application.isBatchMode)
+                    EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Building scene...", 0.55f);
 
                 // Step 5: Build PVE scene
                 SceneBuilder.BuildPVESceneSilent();
 
-                EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Linking enemy prefabs...", 0.8f);
+                if (!Application.isBatchMode)
+                    EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Linking enemy prefabs...", 0.8f);
 
                 // Step 6: Link enemy prefabs
                 EnemyLinker.LinkEnemyPrefabs();
 
-                EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Saving...", 0.95f);
+                if (!Application.isBatchMode)
+                    EditorUtility.DisplayProgressBar("AngelArena Auto Setup", "Saving...", 0.95f);
 
                 // Save scene
                 EditorSceneManager.SaveOpenScenes();
@@ -93,17 +98,25 @@ namespace AngelArena.Editor
 
                 SessionState.SetBool(SETUP_DONE_KEY, true);
 
-                EditorUtility.DisplayDialog("✅ Auto Setup Complete!",
-                    "Angel Arena is ready!\n\n" +
-                    "• Tags registered\n" +
-                    "• Enemy prefabs created (correct PPU)\n" +
-                    "• GameScene built\n" +
-                    "• Enemy spawner linked\n\n" +
-                    "Press PLAY to start the game!", "Play Now!");
+                if (!Application.isBatchMode)
+                {
+                    EditorUtility.DisplayDialog("✅ Auto Setup Complete!",
+                        "Angel Arena is ready!\n\n" +
+                        "• Tags registered\n" +
+                        "• Enemy prefabs created (correct PPU)\n" +
+                        "• GameScene built\n" +
+                        "• Enemy spawner linked\n\n" +
+                        "Press PLAY to start the game!", "Play Now!");
+                }
+                else
+                {
+                    Debug.Log("[AutoSetup] ✅ Auto Setup Complete successfully inside Batchmode!");
+                }
             }
             finally
             {
-                EditorUtility.ClearProgressBar();
+                if (!Application.isBatchMode)
+                    EditorUtility.ClearProgressBar();
             }
         }
 

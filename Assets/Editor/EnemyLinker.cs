@@ -25,8 +25,15 @@ namespace AngelArena.Editor
             var spawner = Object.FindAnyObjectByType<EnemySpawner>();
             if (spawner == null)
             {
-                EditorUtility.DisplayDialog("Error",
-                    "No EnemySpawner found in scene!\nRun 'Build PVE GameScene' first.", "OK");
+                if (!Application.isBatchMode)
+                {
+                    EditorUtility.DisplayDialog("Error",
+                        "No EnemySpawner found in scene!\nRun 'Build PVE GameScene' first.", "OK");
+                }
+                else
+                {
+                    Debug.LogError("[EnemyLinker] No EnemySpawner found in scene!");
+                }
                 return;
             }
 
@@ -98,8 +105,15 @@ namespace AngelArena.Editor
             UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(
                 UnityEngine.SceneManagement.SceneManager.GetActiveScene());
 
-            EditorUtility.DisplayDialog("Done!",
-                $"Linked {pools.Count} enemy pools and {bossPools.Count} boss pools to EnemySpawner!\n\nPress PLAY to start game!", "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("Done!",
+                    $"Linked {pools.Count} enemy pools and {bossPools.Count} boss pools to EnemySpawner!\n\nPress PLAY to start game!", "OK");
+            }
+            else
+            {
+                Debug.Log($"[EnemyLinker] Linked {pools.Count} enemy pools and {bossPools.Count} boss pools to EnemySpawner!");
+            }
 
             Debug.Log($"[AngelArena] EnemySpawner linked: {pools.Count} enemies, {bossPools.Count} bosses");
         }
@@ -137,8 +151,15 @@ namespace AngelArena.Editor
                 }
             }
 
-            EditorUtility.DisplayDialog("Done!",
-                $"Found {chars.Count} CharacterData assets.\n\nAssign them to MainMenuController.characters in Inspector if not auto-linked.", "OK");
+            if (!Application.isBatchMode)
+            {
+                EditorUtility.DisplayDialog("Done!",
+                    $"Found {chars.Count} CharacterData assets.\n\nAssign them to MainMenuController.characters in Inspector if not auto-linked.", "OK");
+            }
+            else
+            {
+                Debug.Log($"[EnemyLinker] Found {chars.Count} CharacterData assets.");
+            }
         }
     }
 }
