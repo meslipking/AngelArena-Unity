@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93c0776e0f876324686a7c10cc1b9b14, type: 3}
+  m_Name: elite_orc
+  m_EditorClassIdentifier: AngelArena::AngelArena.Data.EnemyData
+  enemyName: Elite Orc
+  enemyId: elite_orc
+  sprite: {fileID: 0}
+  color: {r: 0.2, g: 0.9, b: 0.3, a: 1}
+  radius: 40
+  baseHp: 540
+  baseDamage: 66
+  moveSpeed: 75
+  baseXp: 54
+  baseGold: 12
+  contactDamageCooldown: 1
+  canRangedAttack: 0
+  rangedAttackRange: 300
+  rangedAttackDamage: 20
+  rangedAttackCooldown: 2.5
+  rangedProjectilePrefab: {fileID: 0}
+  behavior: 0
+  flankChance: 0.3
+  aggroRange: 300
+  isBoss: 0
+  phase2HpThreshold: 0.6
+  phase3HpThreshold: 0.3
+  canSummonMinions: 0
+  summonCooldown: 5
+  summonCount: 3
+  minionTypes: []

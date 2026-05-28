@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d49b626bfb7b7b644a88fbeb23293583, type: 3}
+  m_Name: necromancer
+  m_EditorClassIdentifier: AngelArena::AngelArena.Data.CharacterData
+  characterName: Necromancer
+  characterId: necromancer
+  description: "Th\u1EA7y ph\xF9 th\u1EE7y b\xF3ng t\u1ED1i. Tri\u1EC7u h\u1ED3i
+    qu\xE2n \u0111o\xE0n x\u01B0\u01A1ng."
+  startSkillId: raise_skeleton
+  characterSprite: {fileID: 0}
+  portrait: {fileID: 0}
+  characterColor: {r: 0.5, g: 0.9, b: 0.5, a: 1}
+  maxHp: 200
+  moveSpeed: 158
+  atkMult: 1.1
+  defMult: 0.9
+  baseLifesteal: 0.05
+  weaponType: 5
+  statPreview:
+    hp: 45
+    spd: 50
+    atk: 60
+    def: 45

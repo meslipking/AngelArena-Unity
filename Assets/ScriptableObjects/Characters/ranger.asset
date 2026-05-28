@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d49b626bfb7b7b644a88fbeb23293583, type: 3}
+  m_Name: ranger
+  m_EditorClassIdentifier: AngelArena::AngelArena.Data.CharacterData
+  characterName: Ranger
+  characterId: ranger
+  description: "X\u1EA1 th\u1EE7 t\u1EA7m xa. T\u1EA5n c\xF4ng t\u1EEB kho\u1EA3ng
+    c\xE1ch an to\xE0n."
+  startSkillId: arrow_rain
+  characterSprite: {fileID: 0}
+  portrait: {fileID: 0}
+  characterColor: {r: 0.2, g: 0.8, b: 0.3, a: 1}
+  maxHp: 195
+  moveSpeed: 185
+  atkMult: 1.25
+  defMult: 0.85
+  baseLifesteal: 0.01
+  weaponType: 3
+  statPreview:
+    hp: 40
+    spd: 75
+    atk: 75
+    def: 40

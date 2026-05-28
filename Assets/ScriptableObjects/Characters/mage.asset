@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d49b626bfb7b7b644a88fbeb23293583, type: 3}
+  m_Name: mage
+  m_EditorClassIdentifier: AngelArena::AngelArena.Data.CharacterData
+  characterName: Mage
+  characterId: mage
+  description: "Ph\xE1p s\u01B0 huy\u1EC1n b\xED. AoE di\u1EC7n r\u1ED9ng, elemental
+    damage."
+  startSkillId: fireball
+  characterSprite: {fileID: 0}
+  portrait: {fileID: 0}
+  characterColor: {r: 0.2, g: 0.5, b: 1, a: 1}
+  maxHp: 175
+  moveSpeed: 165
+  atkMult: 1.35
+  defMult: 0.75
+  baseLifesteal: 0
+  weaponType: 2
+  statPreview:
+    hp: 30
+    spd: 55
+    atk: 95
+    def: 35
