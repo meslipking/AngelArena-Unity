@@ -52,7 +52,10 @@ namespace AngelArena.Skills
             VFXSystem.SpawnFloatText(transform.position + Vector3.up * 18f, "🧲 MAGNET VACUUM!", new Color(0.9f, 0.2f, 0.2f), true);
 
             // Sound
-            AudioManager.Instance?.PlaySfx("magnet_pickup", 0.5f);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.sfxLevelUp, 0.8f);
+            }
 
             Destroy(gameObject);
         }

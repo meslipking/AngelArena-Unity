@@ -134,7 +134,10 @@ namespace AngelArena.Skills
             }
 
             // Audio trigger if available
-            AudioManager.Instance?.PlaySfx("collect_gem", 0.3f);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.sfxLevelUp, 0.3f);
+            }
 
             Destroy(gameObject);
         }
