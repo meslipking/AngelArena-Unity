@@ -76,8 +76,8 @@ namespace AngelArena.Graphics
                                       Color bodyMid, Color bodyDark, Color bodyHL, Color outline)
         {
             int sz = tex.width;
-            // Light source from top-left at 35% from left, 65% from bottom
-            Vector2 lightPos = new Vector2(cx - r * 0.35f, cy + r * 0.45f);
+            // Hướng nguồn sáng từ góc trên bên trái (Top-left light direction)
+            Vector2 lightDir = new Vector2(-1f, 1f).normalized;
 
             for (int y = 0; y < sz; y++)
             for (int x = 0; x < sz; x++)
@@ -86,29 +86,23 @@ namespace AngelArena.Graphics
                 float dist = Mathf.Sqrt(dx * dx + dy * dy);
                 if (dist > r) continue;
 
-                // Normalized distance [0,1]
-                float t = dist / r;
+                // Tính toán Vector pháp tuyến 2.5D tại pixel trên bề mặt hình cầu
+                float nz = Mathf.Sqrt(Mathf.Max(0f, r * r - dx * dx - dy * dy)) / r;
+                Vector3 normal = new Vector3(dx / r, dy / r, nz).normalized;
+                Vector3 lightVec = new Vector3(lightDir.x, lightDir.y, 0.55f).normalized;
 
-                // Distance from light source
-                float lDist = Vector2.Distance(new Vector2(x, y), lightPos);
-                float lFactor = Mathf.Clamp01(lDist / (r * 1.4f));
+                float dot = Vector3.Dot(normal, lightVec);
 
-                // Base: lerp from highlight(center near light) -> mid -> dark(edges)
-                Color fill = Color.Lerp(bodyHL, bodyMid, lFactor * 0.6f + t * 0.4f);
-                fill = Color.Lerp(fill, bodyDark, Mathf.Pow(t, 2.0f) * 0.7f);
-
-                // Rim light (opposite side of specular — bottom right)
-                float rimDx = x - (cx + r * 0.55f), rimDy = y - (cy - r * 0.55f);
-                float rimDist = Mathf.Sqrt(rimDx * rimDx + rimDy * rimDy);
-                if (rimDist < r * 0.5f && t > 0.6f)
+                Color fill;
+                if (dot > -0.05f)
                 {
-                    float rimT = 1f - (rimDist / (r * 0.5f));
-                    Color rimColor = new Color(
-                        Mathf.Clamp01(bodyMid.r * 1.4f),
-                        Mathf.Clamp01(bodyMid.g * 1.4f),
-                        Mathf.Clamp01(bodyMid.b * 1.8f),
-                        1f);
-                    fill = Color.Lerp(fill, rimColor, rimT * 0.3f);
+                    // Vùng sáng (Flat Base Color)
+                    fill = bodyMid;
+                }
+                else
+                {
+                    // Vùng tối sắc nét (Sharp Cel-Shaded Shadow)
+                    fill = bodyDark;
                 }
 
                 tex.SetPixel(x, y, fill);
@@ -126,12 +120,12 @@ namespace AngelArena.Graphics
             {
                 float d = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
                 if (d >= r) continue;
-                float t = 1f - (d / r);
-                // Soft gaussian falloff
-                float alpha = t * t * intensity;
+                
                 Color existing = tex.GetPixel(x, y);
                 if (existing.a < 0.01f) continue;
-                tex.SetPixel(x, y, Color.Lerp(existing, Color.white, alpha));
+                
+                // Highlight dạng hình khối phẳng đè sắc cạnh (Crisp specular highlight)
+                tex.SetPixel(x, y, Color.white);
             }
         }
 

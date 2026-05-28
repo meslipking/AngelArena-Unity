@@ -417,10 +417,19 @@ namespace AngelArena.Core
                 for (int x = 0; x < sz; x++)
                 {
                     float d = Mathf.Sqrt((x-c)*(x-c) + (y-c)*(y-c)) / c;
-                    if (d >= 1f) { tex.SetPixel(x, y, Color.clear); continue; }
-                    // Soft radial glow: bright center, feathered edges
-                    float alpha = Mathf.Pow(1f - d, 1.5f) * color.a;
-                    tex.SetPixel(x, y, new Color(color.r, color.g, color.b, alpha));
+                    if (d >= 0.95f) { tex.SetPixel(x, y, Color.clear); continue; }
+                    
+                    // Thiết lập vòng tròn phẳng hoạt họa với lõi sáng trắng anime (Crisp white hot core + flat ring)
+                    Color fillCol;
+                    if (d < 0.45f)
+                    {
+                        fillCol = Color.white;
+                    }
+                    else
+                    {
+                        fillCol = new Color(color.r, color.g, color.b, color.a);
+                    }
+                    tex.SetPixel(x, y, fillCol);
                 }
                 tex.Apply();
                 return Sprite.Create(tex, new Rect(0,0,sz,sz), Vector2.one*0.5f, (float)sz);
@@ -433,15 +442,16 @@ namespace AngelArena.Core
                 int sz = 64;
                 var tex = new Texture2D(sz, sz, TextureFormat.RGBA32, false);
                 float c = sz / 2f;
-                float outerR = c - 1f;
-                float innerR = c - 6f;
+                float outerR = c - 1.5f;
+                float innerR = c - 6.5f;
                 for (int y = 0; y < sz; y++)
                 for (int x = 0; x < sz; x++)
                 {
                     float d = Mathf.Sqrt((x-c)*(x-c) + (y-c)*(y-c));
                     if (d > outerR || d < innerR) { tex.SetPixel(x, y, Color.clear); continue; }
-                    float t = 1f - Mathf.Abs(d - (outerR+innerR)*0.5f) / ((outerR-innerR)*0.5f);
-                    tex.SetPixel(x, y, new Color(color.r, color.g, color.b, t * t * color.a));
+                    
+                    // Vòng nhẫn phẳng sắc nét (Crisp flat ring outline)
+                    tex.SetPixel(x, y, new Color(color.r, color.g, color.b, color.a));
                 }
                 tex.Apply();
                 return Sprite.Create(tex, new Rect(0,0,sz,sz), Vector2.one*0.5f, (float)sz);
