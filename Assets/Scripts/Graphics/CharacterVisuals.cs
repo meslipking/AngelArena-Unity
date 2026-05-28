@@ -80,6 +80,13 @@ namespace AngelArena.Graphics
             DetermineScale();
             RebuildVisualHierarchy();
             UpdateVisualSkin();
+
+            // Disable parent SpriteRenderer to avoid blocking/clashing with 2.5D visual components
+            var parentSR = GetComponent<SpriteRenderer>();
+            if (parentSR != null)
+            {
+                parentSR.enabled = false;
+            }
         }
 
         private void DetermineScale()
