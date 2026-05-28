@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using AngelArena.Core;
+using AngelArena.Graphics;
 
 namespace AngelArena.Core
 {
@@ -469,12 +470,12 @@ namespace AngelArena.Core
 
         private static IEnumerator RallyCoroutine(PlayerController player, float boost, float duration)
         {
-            float originalSpeed = player.moveSpeed;
-            player.moveSpeed += originalSpeed * boost;
+            float originalSpeed = player.MoveSpeed;
+            player.MoveSpeed += originalSpeed * boost;
             yield return new WaitForSeconds(duration);
             if (player != null)
             {
-                player.moveSpeed = Mathf.Max(originalSpeed, player.moveSpeed - originalSpeed * boost);
+                player.MoveSpeed = Mathf.Max(originalSpeed, player.MoveSpeed - originalSpeed * boost);
             }
         }
 

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using AngelArena.Core;
+using AngelArena.UI;
 
 namespace AngelArena.Graphics
 {
@@ -416,7 +417,7 @@ namespace AngelArena.Graphics
         public void TriggerDamageVignette()
         {
             _vignetteTimer = 0.3f;
-            CameraFX.Instance?.FlashDamage();
+            CameraController.Instance?.Shake(5f, 0.2f);
         }
 
         public void ShowBossWarning(string bossId)

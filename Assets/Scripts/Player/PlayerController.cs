@@ -24,18 +24,18 @@ namespace AngelArena.Core
         public SkillSystem skillSystem;
 
         // ── Runtime Stats ────────────────────────────────────────
-        public int   Level       { get; private set; } = 1;
-        public float Hp          { get; private set; }
-        public float MaxHp       { get; private set; }
-        public float MoveSpeed   { get; private set; }
-        public float DamageMult  { get; private set; } = 1f;
-        public float DefMult     { get; private set; } = 1f;
-        public float CdMult      { get; private set; } = 1f;
-        public float AoeMult     { get; private set; } = 1f;
-        public float SpeedMult   { get; private set; } = 1f;
-        public float XpGainMult  { get; private set; } = 1f;
-        public float Lifesteal   { get; private set; }
-        public float HpRegen     { get; private set; }
+        public int   Level       { get; set; } = 1;
+        public float Hp          { get; set; }
+        public float MaxHp       { get; set; }
+        public float MoveSpeed   { get; set; }
+        public float DamageMult  { get; set; } = 1f;
+        public float DefMult     { get; set; } = 1f;
+        public float CdMult      { get; set; } = 1f;
+        public float AoeMult     { get; set; } = 1f;
+        public float SpeedMult   { get; set; } = 1f;
+        public float XpGainMult  { get; set; } = 1f;
+        public float Lifesteal   { get; set; }
+        public float HpRegen     { get; set; }
         public bool  IsAlive     => Hp > 0;
 
         private int   _xp;

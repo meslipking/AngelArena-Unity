@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using AngelArena.Data;
+using AngelArena.Graphics;
 
 namespace AngelArena.Core
 {
@@ -113,7 +114,7 @@ namespace AngelArena.Core
             return false;
         }
 
-        private void CheckLegendary()
+        public void CheckLegendary()
         {
             if (player == null) return;
             bool updated = false;

@@ -27,6 +27,8 @@ namespace AngelArena.Core
         public bool  IsAlive => Hp > 0;
         public int   Phase  { get; private set; } = 1;
         public string EnemyName => data ? data.enemyName : "Enemy";
+        public bool  IsMoving => _rb != null && _rb.linearVelocity.sqrMagnitude > 0.01f;
+        public Vector2 Velocity => _rb != null ? _rb.linearVelocity : Vector2.zero;
 
         // ── Status effects ────────────────────────────────────────
         private float _slowTimer;
