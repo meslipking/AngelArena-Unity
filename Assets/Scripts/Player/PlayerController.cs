@@ -36,6 +36,10 @@ namespace AngelArena.Core
         public float XpGainMult  { get; set; } = 1f;
         public float Lifesteal   { get; set; }
         public float HpRegen     { get; set; }
+        public float MagnetRadius { get; set; } = 100f; // default magnet radius
+        public float GoldMult    { get; set; } = 1f;   // gold scaling multiplier
+        public float CritChance  { get; set; } = 0.05f; // default crit chance
+        public int   ProjectileAmount { get; set; } = 0; // extra projectile amount
         public bool  IsAlive     => Hp > 0;
 
         private int   _xp;
@@ -47,6 +51,7 @@ namespace AngelArena.Core
         private SpriteRenderer _sr;
         private float          _flashTimer;
         private float          _iFrameTimer;
+        private float          _trailTimer;
         private const float    FLASH_DURATION  = 0.12f;
         private const float    IFRAME_DURATION = 0.5f;
 
@@ -65,12 +70,43 @@ namespace AngelArena.Core
         public void InitFromData(CharacterData data)
         {
             characterData = data;
-            MaxHp         = data.maxHp;
+            
+            // Read powerups from SaveSystem
+            var save = Save.SaveSystem.Instance != null ? Save.SaveSystem.Instance.CurrentSave : null;
+            var pu = save != null ? save.powerups : new Save.SaveSystem.PowerupsState();
+
+            // Apply PVE powerups
+            float puVitality = pu.vitality * 0.05f; // +5% HP per level
+            MaxHp         = data.maxHp * (1f + puVitality);
             Hp            = MaxHp;
-            MoveSpeed     = data.moveSpeed;
-            DamageMult    = data.atkMult;
+            
+            float puSwiftness = pu.swiftness * 0.02f; // +2% speed per level
+            MoveSpeed     = data.moveSpeed * (1f + puSwiftness);
+            
+            float puMight = pu.might * 0.05f; // +5% attack mult per level
+            DamageMult    = data.atkMult * (1f + puMight);
+            
             DefMult       = data.defMult;
             Lifesteal     = data.baseLifesteal;
+            
+            float puRecovery = pu.recovery * 0.5f; // +0.5 HP/s per level
+            HpRegen       = puRecovery;
+            
+            float puCooldown = pu.cooldown * -0.025f; // -2.5% CD per level
+            CdMult        = 1f + puCooldown;
+            
+            float puGrowth = pu.growth * 0.10f; // +10% XP per level
+            XpGainMult    = 1f + puGrowth;
+            
+            float puGreed = pu.greed * 0.15f; // +15% Gold per level
+            GoldMult      = 1f + puGreed;
+            
+            float puLuck = pu.luck * 0.02f; // +2% luck/crit per level
+            CritChance    = 0.05f + puLuck;
+            
+            MagnetRadius  = 100f + pu.magnet * 80f; // +80px magnet per level
+            ProjectileAmount = pu.amount; // +1 projectile count per level
+
             Level         = 1;
             _xp           = 0;
             _xpToNext     = WaveScaling.GetXpToNext(1);
@@ -81,19 +117,47 @@ namespace AngelArena.Core
         /// <summary>Fallback init when no CharacterData is assigned (for quick testing).</summary>
         public void InitDefaults()
         {
-            MaxHp      = 500f;
+            // Read powerups from SaveSystem
+            var save = Save.SaveSystem.Instance != null ? Save.SaveSystem.Instance.CurrentSave : null;
+            var pu = save != null ? save.powerups : new Save.SaveSystem.PowerupsState();
+
+            float puVitality = pu.vitality * 0.05f;
+            MaxHp      = 500f * (1f + puVitality);
             Hp         = MaxHp;
-            MoveSpeed  = 280f;
-            DamageMult = 1f;
+            
+            float puSwiftness = pu.swiftness * 0.02f;
+            MoveSpeed  = 280f * (1f + puSwiftness);
+            
+            float puMight = pu.might * 0.05f;
+            DamageMult = 1f * (1f + puMight);
+            
             DefMult    = 1f;
             Lifesteal  = 0f;
-            HpRegen    = 1f;
+            
+            float puRecovery = pu.recovery * 0.5f;
+            HpRegen    = 1f + puRecovery;
+            
+            float puCooldown = pu.cooldown * -0.025f;
+            CdMult     = 1f + puCooldown;
+            
+            float puGrowth = pu.growth * 0.10f;
+            XpGainMult = 1f + puGrowth;
+            
+            float puGreed = pu.greed * 0.15f;
+            GoldMult   = 1f + puGreed;
+            
+            float puLuck = pu.luck * 0.02f;
+            CritChance = 0.05f + puLuck;
+            
+            MagnetRadius = 100f + pu.magnet * 80f;
+            ProjectileAmount = pu.amount;
+
             Level      = 1;
             _xp        = 0;
             _xpToNext  = WaveScaling.GetXpToNext(1);
             OnHpChanged?.Invoke(Hp, MaxHp);
             OnXpChanged?.Invoke(_xp, _xpToNext);
-            Debug.Log("[AngelArena] Player initialized with DEFAULT stats (no CharacterData assigned)");
+            Debug.Log("[AngelArena] Player initialized with DEFAULT stats and PVE powerups");
         }
 
         private void Update()
@@ -125,6 +189,17 @@ namespace AngelArena.Core
 
             // Animator
             if (_animator) _animator.SetBool("IsMoving", _moveInput.sqrMagnitude > 0.01f);
+
+            // Speed Trail
+            if (_moveInput.sqrMagnitude > 0.01f)
+            {
+                _trailTimer -= Time.deltaTime;
+                if (_trailTimer <= 0)
+                {
+                    _trailTimer = 0.08f;
+                    SkillVFX.SpawnSpeedTrail(transform.position, _moveInput, new Color(0.2f, 0.8f, 1f, 0.22f), 0.3f);
+                }
+            }
         }
 
         private void FixedUpdate()
@@ -233,6 +308,9 @@ namespace AngelArena.Core
                 case Data.PassiveEffect.LifeSteal:    Lifesteal  += total;      break;
                 case Data.PassiveEffect.XpGainMult:   XpGainMult *= 1f + total; break;
                 case Data.PassiveEffect.HpRegen:      HpRegen    += total;      break;
+                case Data.PassiveEffect.GoldMult:     GoldMult   *= 1f + total; break;
+                case Data.PassiveEffect.CritChance:   CritChance += total;      break;
+                case Data.PassiveEffect.MagnetRadius: MagnetRadius *= 1f + total; break;
             }
             OnHpChanged?.Invoke(Hp, MaxHp);
         }

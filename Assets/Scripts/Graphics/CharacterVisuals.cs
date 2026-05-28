@@ -55,6 +55,17 @@ namespace AngelArena.Graphics
         private SpriteRenderer _haloSR;
         private SpriteRenderer _shadowSR;
 
+        // Custom Face Layer GOs
+        private GameObject     _eyesGO;
+        private SpriteRenderer _eyesSR;
+
+        // Face & Anim States
+        private bool           _isHit;
+        private bool           _isDead;
+        private float          _hitTimer;
+        private float          _lastHp = -1f;
+        private Vector2        _eyeLookDir;
+
         // State caching
         private string _lastBranch;
         private int    _lastLevel = -1;
@@ -143,6 +154,12 @@ namespace AngelArena.Graphics
             _bodySR = _bodyGO.AddComponent<SpriteRenderer>();
             _bodyGO.transform.localScale = Vector3.one * _scaleSize;
 
+            // Face Layer - Eyes GameObject (child of body)
+            _eyesGO = new GameObject("Eyes");
+            _eyesGO.transform.SetParent(_bodyGO.transform, false);
+            _eyesSR = _eyesGO.AddComponent<SpriteRenderer>();
+            _eyesSR.sortingOrder = 11; // draw above body
+
             // Halo (above head)
             _haloGO = CreateChild("Halo", 11);
             _haloSR = _haloGO.AddComponent<SpriteRenderer>();
@@ -192,6 +209,7 @@ namespace AngelArena.Graphics
                 float v = Input.GetAxisRaw("Vertical");
                 movement = new Vector2(h, v);
                 moving = movement.sqrMagnitude > 0.01f;
+                _isDead = !playerCtrl.IsAlive;
             }
             else if (enemyCtrl != null)
             {
@@ -199,6 +217,7 @@ namespace AngelArena.Graphics
                 isElite = enemyCtrl.isElite;
                 moving = enemyCtrl.IsMoving;
                 movement = enemyCtrl.Velocity;
+                _isDead = !enemyCtrl.IsAlive;
 
                 // Map enemy types to visual levels / branches
                 string enName = enemyCtrl.EnemyName?.ToLower() ?? "";
@@ -224,6 +243,61 @@ namespace AngelArena.Graphics
                 _lastIsElite = isElite;
                 _lastIsMorphed = isMorphed;
                 UpdateVisualSkin();
+            }
+
+            // Detect hit via HP drops
+            float curHp = _isPlayer ? (playerCtrl != null ? playerCtrl.Hp : 0f) : (enemyCtrl != null ? enemyCtrl.Hp : 0f);
+            if (_lastHp < 0f) _lastHp = curHp;
+            if (curHp < _lastHp && curHp > 0 && _lastHp > 0)
+            {
+                _isHit = true;
+                _hitTimer = 0.15f;
+            }
+            _lastHp = curHp;
+
+            if (_hitTimer > 0)
+            {
+                _hitTimer -= Time.deltaTime;
+                if (_hitTimer <= 0) _isHit = false;
+            }
+
+            // Pupil tracking toward movement or nearest enemy
+            Vector2 targetLook = Vector2.zero;
+            if (_isPlayer && playerCtrl != null)
+            {
+                if (moving)
+                {
+                    targetLook = movement.normalized;
+                }
+                else
+                {
+                    // Find nearest enemy
+                    float minD = 300f;
+                    EnemyController nearest = null;
+                    if (EnemySpawner.AllEnemies != null)
+                    {
+                        foreach (var en in EnemySpawner.AllEnemies)
+                        {
+                            if (en == null || !en.IsAlive) continue;
+                            float d = Vector2.Distance(transform.position, en.transform.position);
+                            if (d < minD) { minD = d; nearest = en; }
+                        }
+                    }
+                    if (nearest != null)
+                        targetLook = ((Vector2)(nearest.transform.position - transform.position)).normalized;
+                }
+            }
+            else if (enemyCtrl != null && _playerTr != null)
+            {
+                targetLook = ((Vector2)(_playerTr.position - transform.position)).normalized;
+            }
+
+            _eyeLookDir = Vector2.Lerp(_eyeLookDir, targetLook, Time.deltaTime * 8f);
+            if (_eyesGO != null)
+            {
+                // Account for flipping (local X scale determines direction)
+                float flipX = transform.localScale.x < 0 ? -1f : 1f;
+                _eyesGO.transform.localPosition = new Vector3(_eyeLookDir.x * 1.5f * flipX, _eyeLookDir.y * 1.0f, -0.01f);
             }
 
             // Hurt flash
@@ -327,8 +401,20 @@ namespace AngelArena.Graphics
             Color bodyColor = ParseHex(skin.body1);
             Color outlineColor = ParseHex(skin.outline);
 
-            // Re-generate procedurally body sprite
-            _bodySR.sprite = SpriteFactory.GetOrCreate($"body_{_lastBranch}_{_lastLevel}_{_lastIsMorphed}_{_isBlinking}_{_isAttacking}", () => GenerateBodyTexture(skin));
+            // Re-generate procedurally body sprite (Removed blink/attack from body cache to avoid cache overflow)
+            _bodySR.sprite = SpriteFactory.GetOrCreate($"body_{_lastBranch}_{_lastLevel}_{_lastIsMorphed}", () => GenerateBodyTexture(skin));
+
+            // Update procedural Eyes sprite based on expressiveness states
+            string eyeStateKey = "idle";
+            if (_isDead) eyeStateKey = "dead";
+            else if (_isHit) eyeStateKey = "hit";
+            else if (_isBlinking) eyeStateKey = "blink";
+            else if (_isAttacking) eyeStateKey = "angry";
+
+            if (_eyesSR != null)
+            {
+                _eyesSR.sprite = SpriteFactory.GetOrCreate($"eyes_{eyeStateKey}_{skin.eye}_{skin.outline}", () => GenerateEyesSprite(eyeStateKey, skin));
+            }
 
             // Generate customized hand & foot sprites (Gauntlets/Tabi shoes/sandals)
             string classId = _isPlayer ? _lastBranch : "enemy";
@@ -606,8 +692,8 @@ namespace AngelArena.Graphics
                 else if (skin.skinType == "celestial") DrawStar(tex, hx, hy - hr * 0.3f, 4f, Color.white);
                 else if (skin.skinType == "omega") DrawOmegaSymbol(tex, hx, hy - hr * 0.3f, 5f, Color.yellow);
 
-                // 5. Eyes & Expression (Blinking / Attack angry)
-                DrawEyes(tex, hx, hy, hr, cEye, cOut, _isAttacking, _isBlinking);
+                // 5. Eyes & Expression (Blinking / Attack angry) - Handled dynamically by custom Face Layer _eyesSR
+                // DrawEyes(tex, hx, hy, hr, cEye, cOut, _isAttacking, _isBlinking);
 
                 // 6. Blushing cheeks & Cute Mouth
                 DrawCheeks(tex, hx, hy, hr);
@@ -1152,11 +1238,92 @@ namespace AngelArena.Graphics
                 else
                 {
                     float factor = d / r;
-                    float hD = Vector2.Distance(new Vector2(x, y), new Vector2(cx - r * 0.3f, cy + r * 0.3f));
-                    float hFactor = Mathf.Clamp01(hD / (r * 1.5f));
-                    Color fill = Color.Lerp(cHL, Color.Lerp(c1, c2, factor), hFactor);
+                    float hD = Vector2.Distance(new Vector2(x, y), new Vector2(cx - r * 0.3f, cy + r * 0.35f));
+                    float hFactor = Mathf.Clamp01(hD / (r * 1.4f));
+                    
+                    // Radial gradient sphere background
+                    Color fill = Color.Lerp(cHL, Color.Lerp(c1, c2, factor * 0.8f), hFactor);
+                    
+                    // Add glossy specular toy-like highlight (white circle in top-left)
+                    if (hD < r * 0.22f)
+                    {
+                        float specAlpha = 1f - (hD / (r * 0.22f));
+                        fill = Color.Lerp(fill, Color.white, specAlpha * 0.85f);
+                    }
+                    
                     tex.SetPixel(x, y, fill);
                 }
+            }
+        }
+
+        private Sprite GenerateEyesSprite(string state, SkinDef skin)
+        {
+            int sz = 128;
+            var tex = new Texture2D(sz, sz, TextureFormat.RGBA32, false);
+            float c = sz / 2f;
+            float r = sz * 0.38f;
+            float hr = r * 0.65f;
+            float hx = c;
+            float hy = c + r * 0.15f;
+
+            for (int y = 0; y < sz; y++)
+            for (int x = 0; x < sz; x++) tex.SetPixel(x, y, Color.clear);
+
+            Color cEye = ParseHex(skin.eye);
+            Color cOut = ParseHex(skin.outline);
+
+            float eyeSpread = hr * 0.35f;
+            float eyeY = hy + hr * 0.15f;
+            float eyeR = hr * 0.16f;
+            float pupR = hr * 0.08f;
+
+            if (state == "blink")
+            {
+                DrawLine(tex, hx - eyeSpread - eyeR, eyeY, hx - eyeSpread + eyeR, eyeY, cOut);
+                DrawLine(tex, hx + eyeSpread - eyeR, eyeY, hx + eyeSpread + eyeR, eyeY, cOut);
+            }
+            else if (state == "dead")
+            {
+                DrawXEye(tex, hx - eyeSpread, eyeY, eyeR, cOut);
+                DrawXEye(tex, hx + eyeSpread, eyeY, eyeR, cOut);
+            }
+            else if (state == "hit")
+            {
+                DrawSquashedEye(tex, hx - eyeSpread, eyeY, eyeR, cOut, true);
+                DrawSquashedEye(tex, hx + eyeSpread, eyeY, eyeR, cOut, false);
+            }
+            else
+            {
+                bool angry = (state == "angry");
+                DrawSingleEye(tex, hx - eyeSpread, eyeY, eyeR, pupR, cEye, cOut, angry, true);
+                DrawSingleEye(tex, hx + eyeSpread, eyeY, eyeR, pupR, cEye, cOut, angry, false);
+            }
+
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, sz, sz), Vector2.one * 0.5f, sz);
+        }
+
+        private void DrawXEye(Texture2D tex, float ex, float ey, float er, Color col)
+        {
+            float len = er * 0.9f;
+            DrawLine(tex, ex - len, ey - len, ex + len, ey + len, col);
+            DrawLine(tex, ex - len, ey + len, ex + len, ey - len, col);
+        }
+
+        private void DrawSquashedEye(Texture2D tex, float ex, float ey, float er, Color col, bool left)
+        {
+            float len = er * 0.8f;
+            if (left)
+            {
+                // Shape: >
+                DrawLine(tex, ex - len, ey + len * 0.7f, ex + len * 0.3f, ey, col);
+                DrawLine(tex, ex + len * 0.3f, ey, ex - len, ey - len * 0.7f, col);
+            }
+            else
+            {
+                // Shape: <
+                DrawLine(tex, ex + len, ey + len * 0.7f, ex - len * 0.3f, ey, col);
+                DrawLine(tex, ex - len * 0.3f, ey, ex + len, ey - len * 0.7f, col);
             }
         }
 

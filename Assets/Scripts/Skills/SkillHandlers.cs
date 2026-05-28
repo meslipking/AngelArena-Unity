@@ -24,11 +24,23 @@ namespace AngelArena.Core
             var player = P(sys);
             float dmg    = (20f + level * 12f) * player.DamageMult;
             float range  = (250f + level * 30f) * player.AoeMult;
-            Vector2[] dirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
-
-            foreach (var dir in dirs)
-                sys.SpawnProjectile(SkillPrefabs.Get("shadow_blade_proj"),
-                    player.transform.position, dir, 380f, dmg, range, piercing: true);
+            
+            int copies = 1 + player.ProjectileAmount;
+            Vector2[] baseDirs = { Vector2.up, Vector2.down, Vector2.left, Vector2.right };
+            
+            for (int c = 0; c < copies; c++)
+            {
+                float offsetAngle = (c - (copies - 1) / 2f) * 10f * Mathf.Deg2Rad;
+                foreach (var baseDir in baseDirs)
+                {
+                    Vector2 dir = new Vector2(
+                        baseDir.x * Mathf.Cos(offsetAngle) - baseDir.y * Mathf.Sin(offsetAngle),
+                        baseDir.x * Mathf.Sin(offsetAngle) + baseDir.y * Mathf.Cos(offsetAngle)
+                    ).normalized;
+                    sys.SpawnProjectile(SkillPrefabs.Get("shadow_blade_proj"),
+                        player.transform.position, dir, 380f, dmg, range, piercing: true);
+                }
+            }
         }
 
         public static void VoidPulse(SkillSystem sys, int level)
@@ -85,10 +97,25 @@ namespace AngelArena.Core
             var target = sys.FindNearestEnemy(600f);
             if (target == null) return;
 
-            float dmg = (32f + level * 10f) * P(sys).DamageMult;
-            Vector2 dir = (target.transform.position - P(sys).transform.position).normalized;
-            sys.SpawnProjectile(SkillPrefabs.Get("magic_missile_proj"),
-                P(sys).transform.position, dir, 420f, dmg, 600f);
+            var player = P(sys);
+            float dmg = (32f + level * 10f) * player.DamageMult;
+            Vector2 dir = (target.transform.position - player.transform.position).normalized;
+            
+            int count = 1 + player.ProjectileAmount;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 finalDir = dir;
+                if (count > 1)
+                {
+                    float angleOffset = (i - (count - 1) / 2f) * 12f * Mathf.Deg2Rad;
+                    finalDir = new Vector2(
+                        dir.x * Mathf.Cos(angleOffset) - dir.y * Mathf.Sin(angleOffset),
+                        dir.x * Mathf.Sin(angleOffset) + dir.y * Mathf.Cos(angleOffset)
+                    ).normalized;
+                }
+                sys.SpawnProjectile(SkillPrefabs.Get("magic_missile_proj"),
+                    player.transform.position, finalDir, 420f, dmg, 600f);
+            }
         }
 
         public static void FrostAura(SkillSystem sys, int level)
@@ -142,7 +169,7 @@ namespace AngelArena.Core
 
             var hits = sys.FindEnemiesInRadius(pos, radius);
             foreach (var e in hits) e.TakeDamage(dmg, DamageType.Fire);
-            SkillVFX.SpawnAoe(pos, radius, new Color(1f, 0.4f, 0f), 0.6f);
+            SkillVFX.SpawnBoomExplosion(pos, radius, 0.6f);
             CameraController.Instance?.Shake(8f, 0.3f);
         }
 
@@ -151,13 +178,27 @@ namespace AngelArena.Core
             var target = sys.FindNearestEnemy(550f);
             if (target == null) return;
 
-            float dmg    = (52f + level * 16f) * P(sys).DamageMult;
-            float radius = (70f + level * 12f) * P(sys).AoeMult;
-            Vector2 dir  = (target.transform.position - P(sys).transform.position).normalized;
+            var player = P(sys);
+            float dmg    = (52f + level * 16f) * player.DamageMult;
+            float radius = (70f + level * 12f) * player.AoeMult;
+            Vector2 dir  = (target.transform.position - player.transform.position).normalized;
 
-            var proj = sys.SpawnProjectile(SkillPrefabs.Get("fireball_proj"),
-                P(sys).transform.position, dir, 280f, dmg, 550f);
-            if (proj) proj.AoeRadius = radius;
+            int count = 1 + player.ProjectileAmount;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 finalDir = dir;
+                if (count > 1)
+                {
+                    float angleOffset = (i - (count - 1) / 2f) * 15f * Mathf.Deg2Rad;
+                    finalDir = new Vector2(
+                        dir.x * Mathf.Cos(angleOffset) - dir.y * Mathf.Sin(angleOffset),
+                        dir.x * Mathf.Sin(angleOffset) + dir.y * Mathf.Cos(angleOffset)
+                    ).normalized;
+                }
+                var proj = sys.SpawnProjectile(SkillPrefabs.Get("fireball_proj"),
+                    player.transform.position, finalDir, 280f, dmg, 550f);
+                if (proj) proj.AoeRadius = radius;
+            }
         }
 
         // ════════════════════════════════════════════════════════
@@ -169,11 +210,26 @@ namespace AngelArena.Core
             var target = sys.FindNearestEnemy(700f);
             if (target == null) return;
 
-            float dmg = (26f + level * 9f) * P(sys).DamageMult;
-            Vector2 dir = (target.transform.position - P(sys).transform.position).normalized;
-            sys.SpawnProjectile(SkillPrefabs.Get("arrow_proj"),
-                P(sys).transform.position, dir, 500f, dmg,
-                (700f + level * 50f) * P(sys).AoeMult, piercing: true);
+            var player = P(sys);
+            float dmg = (26f + level * 9f) * player.DamageMult;
+            Vector2 dir = (target.transform.position - player.transform.position).normalized;
+
+            int count = 1 + player.ProjectileAmount;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 finalDir = dir;
+                if (count > 1)
+                {
+                    float angleOffset = (i - (count - 1) / 2f) * 10f * Mathf.Deg2Rad;
+                    finalDir = new Vector2(
+                        dir.x * Mathf.Cos(angleOffset) - dir.y * Mathf.Sin(angleOffset),
+                        dir.x * Mathf.Sin(angleOffset) + dir.y * Mathf.Cos(angleOffset)
+                    ).normalized;
+                }
+                sys.SpawnProjectile(SkillPrefabs.Get("arrow_proj"),
+                    player.transform.position, finalDir, 500f, dmg,
+                    (700f + level * 50f) * player.AoeMult, piercing: true);
+            }
         }
 
         public static void ArrowRain(SkillSystem sys, int level)
@@ -209,11 +265,26 @@ namespace AngelArena.Core
             var target = sys.FindNearestEnemy(800f);
             if (target == null) return;
 
-            float dmg = (60f + level * 20f) * P(sys).DamageMult;
-            Vector2 dir = (target.transform.position - P(sys).transform.position).normalized;
-            var proj = sys.SpawnProjectile(SkillPrefabs.Get("spirit_wolf_proj"),
-                P(sys).transform.position, dir, 320f, dmg, 800f);
-            if (proj) proj.AoeRadius = 50f * P(sys).AoeMult;
+            var player = P(sys);
+            float dmg = (60f + level * 20f) * player.DamageMult;
+            Vector2 dir = (target.transform.position - player.transform.position).normalized;
+
+            int count = 1 + player.ProjectileAmount;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 finalDir = dir;
+                if (count > 1)
+                {
+                    float angleOffset = (i - (count - 1) / 2f) * 15f * Mathf.Deg2Rad;
+                    finalDir = new Vector2(
+                        dir.x * Mathf.Cos(angleOffset) - dir.y * Mathf.Sin(angleOffset),
+                        dir.x * Mathf.Sin(angleOffset) + dir.y * Mathf.Cos(angleOffset)
+                    ).normalized;
+                }
+                var proj = sys.SpawnProjectile(SkillPrefabs.Get("spirit_wolf_proj"),
+                    player.transform.position, finalDir, 320f, dmg, 800f);
+                if (proj) proj.AoeRadius = 50f * player.AoeMult;
+            }
         }
 
         // ════════════════════════════════════════════════════════
@@ -623,7 +694,7 @@ namespace AngelArena.Core
                 yield return new WaitForSeconds(0.8f);
                 var hits = sys.FindEnemiesInRadius(pos, radius);
                 foreach (var e in hits) e.TakeDamage(dmg, DamageType.Fire);
-                SkillVFX.SpawnAoe(pos, radius, new Color(1f, 0.2f, 0f), 0.6f);
+                SkillVFX.SpawnBoomExplosion(pos, radius, 0.6f);
                 CameraController.Instance?.Shake(12f, 0.3f);
                 yield return new WaitForSeconds(0.4f);
             }

@@ -79,6 +79,11 @@ namespace AngelArena.Core
             // Elite visual — gold tint instead of outline shader (avoids missing shader error)
             if (elite && !boss && _sr)
                 _sr.color = new Color(1f, 0.85f, 0.2f); // gold tint
+
+            if (isBoss)
+            {
+                gameObject.AddComponent<AngelArena.Enemies.BossKingAura>();
+            }
         }
 
         private void Update()
@@ -170,13 +175,65 @@ namespace AngelArena.Core
             if (Hp <= 0) Die();
         }
 
+        private void SpawnLoot(string type, string tier, int val)
+        {
+            var go = new GameObject(type == "gold_orb" ? "GoldCoin" : "XPGem");
+            go.transform.position = transform.position + new Vector3(UnityEngine.Random.Range(-4f, 4f), UnityEngine.Random.Range(-4f, 4f), 0f);
+            var gem = go.AddComponent<AngelArena.Skills.LootGem>();
+            gem.gemType = type;
+            gem.gemTier = tier;
+            gem.value   = val;
+        }
+
         private void Die()
         {
             Hp = 0;
             int xp   = Mathf.RoundToInt((data?.baseXp   ?? 5)  * (isElite ? 3 : 1) * (isBoss ? 20 : 1));
             int gold = Mathf.RoundToInt((data?.baseGold  ?? 1)  * (isElite ? 2 : 1) * (isBoss ? 15 : 1));
 
-            GameManager.Instance.RegisterKill(xp, gold);
+            // Gọi RegisterKill với 0, 0 để GameManager chỉ ghi nhận Streak và Kills mà không cộng trực tiếp XP/Gold
+            GameManager.Instance.RegisterKill(0, 0);
+
+            // Rải hạt ngọc XP & tiền vàng xu dựa theo cấp quái vật
+            if (isBoss)
+            {
+                // Ngọc Boss vàng cực lớn
+                SpawnLoot("xp_orb", "boss", Mathf.RoundToInt(xp * 0.5f));
+                SpawnLoot("xp_orb", "large", Mathf.RoundToInt(xp * 0.3f));
+                SpawnLoot("xp_orb", "medium", Mathf.RoundToInt(xp * 0.2f));
+                for (int i = 0; i < 5; i++) SpawnLoot("xp_orb", "small", 2);
+
+                // Rải nhiều đồng xu vàng
+                int coinsCount = Mathf.Clamp(gold / 5, 4, 15);
+                int valPerCoin = Mathf.Max(1, gold / coinsCount);
+                for (int i = 0; i < coinsCount; i++) SpawnLoot("gold_orb", "boss", valPerCoin);
+            }
+            else if (xp > 15)
+            {
+                SpawnLoot("xp_orb", "large", Mathf.RoundToInt(xp * 0.7f));
+                SpawnLoot("xp_orb", "medium", Mathf.RoundToInt(xp * 0.3f));
+                
+                // Rải vàng
+                int coinsCount = Mathf.Clamp(gold / 2, 2, 6);
+                int valPerCoin = Mathf.Max(1, gold / coinsCount);
+                for (int i = 0; i < coinsCount; i++) SpawnLoot("gold_orb", "medium", valPerCoin);
+            }
+            else if (xp > 5)
+            {
+                SpawnLoot("xp_orb", "medium", xp);
+                
+                // Rải vàng
+                int coinsCount = Mathf.Clamp(gold, 1, 4);
+                int valPerCoin = Mathf.Max(1, gold / coinsCount);
+                for (int i = 0; i < coinsCount; i++) SpawnLoot("gold_orb", "small", valPerCoin);
+            }
+            else
+            {
+                SpawnLoot("xp_orb", "small", xp);
+                
+                // Rải vàng
+                for (int i = 0; i < gold; i++) SpawnLoot("gold_orb", "small", 1);
+            }
 
             // Death VFX
             SkillVFX.SpawnDeathBurst(transform.position, _baseColor);

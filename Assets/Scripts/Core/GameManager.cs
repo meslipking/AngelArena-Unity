@@ -118,6 +118,12 @@ namespace AngelArena.Core
             Time.timeScale = 1f;
         }
 
+        public void AddGoldSession(int amount)
+        {
+            int final = Mathf.RoundToInt(amount * (playerController != null ? playerController.GoldMult : 1f));
+            TotalGold += final;
+        }
+
         public void RegisterKill(int xp, int gold)
         {
             TotalKills++;
@@ -140,6 +146,19 @@ namespace AngelArena.Core
             Time.timeScale = 0f;
             OnGameOver?.Invoke();
 
+            // Record session data in SaveSystem
+            if (Save.SaveSystem.Instance != null)
+            {
+                Save.SaveSystem.Instance.RecordSession(
+                    Mathf.RoundToInt(ElapsedSeconds),
+                    TotalKills,
+                    playerController != null ? playerController.Level : 1,
+                    selectedCharacter != null ? selectedCharacter.characterId : "fighter",
+                    0,
+                    TotalGold
+                );
+            }
+
             // Steam achievements
             Steam.SteamManager.Instance?.UnlockIfQualified(TotalKills, playerController?.Level ?? 1, ElapsedSeconds);
         }
@@ -148,6 +167,20 @@ namespace AngelArena.Core
         {
             State = GameState.Victory;
             OnVictory?.Invoke();
+
+            // Record session data in SaveSystem
+            if (Save.SaveSystem.Instance != null)
+            {
+                Save.SaveSystem.Instance.RecordSession(
+                    Mathf.RoundToInt(ElapsedSeconds),
+                    TotalKills,
+                    playerController != null ? playerController.Level : 1,
+                    selectedCharacter != null ? selectedCharacter.characterId : "fighter",
+                    0,
+                    TotalGold
+                );
+            }
+
             Steam.SteamManager.Instance?.OnVictory(ElapsedSeconds, TotalKills);
         }
 

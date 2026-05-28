@@ -12,6 +12,17 @@ using UnityEngine.UI;
 namespace AngelArena.Core
 {
     // ══════════════════════════════════════════════════════════════
+    // VFX SYSTEM WRAPPER
+    // ══════════════════════════════════════════════════════════════
+    public static class VFXSystem
+    {
+        public static void SpawnFloatText(Vector3 worldPos, string text, Color color, bool big = false)
+        {
+            DamageNumbers.SpawnFloatText(worldPos, text, color, big);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════
     // DAMAGE NUMBERS
     // ══════════════════════════════════════════════════════════════
 
@@ -21,6 +32,30 @@ namespace AngelArena.Core
     public static class DamageNumbers
     {
         private static Canvas _canvas;
+
+        public static void SpawnFloatText(Vector3 worldPos, string text, Color color, bool big = false)
+        {
+            if (!EnsureCanvas()) return;
+
+            var go  = new GameObject("FloatText");
+            go.transform.SetParent(_canvas.transform, false);
+
+            var txt = go.AddComponent<Text>();
+            txt.text      = text;
+            txt.fontSize  = big ? 24 : 18;
+            txt.color     = color;
+            txt.font      = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            txt.fontStyle = FontStyle.Bold;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.raycastTarget = false;
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(250, 45);
+            var cam = Camera.main;
+            if (cam) rt.position = cam.WorldToScreenPoint(worldPos);
+
+            go.AddComponent<DamageNumberAnim>();
+        }
 
         public static void Spawn(Vector3 worldPos, int amount, DamageType type = DamageType.Physical)
         {
@@ -177,6 +212,57 @@ namespace AngelArena.Core
             go.AddComponent<FadeScaleAnim>().Init(0.15f, size, size * 1.5f, color);
         }
 
+        // ── Speed trail (running ghost trail) ─────────────────────
+        public static void SpawnSpeedTrail(Vector2 pos, Vector2 dir, Color color, float duration)
+        {
+            var go = CreateCircleGO("SpeedTrail", pos, 18f, color, 4, duration);
+            go.AddComponent<FadeScaleAnim>().Init(duration, 18f, 2f, color);
+        }
+
+        // ── BOOM Explosion (stylized comic-book skull/fire blast) ──
+        public static void SpawnBoomExplosion(Vector2 pos, float radius, float duration)
+        {
+            // 1. Fiery core
+            var core = CreateCircleGO("BoomCore", pos, radius * 1.2f, new Color(1f, 0.3f, 0f, 0.8f), 10, duration);
+            core.AddComponent<FadeScaleAnim>().Init(duration, radius * 0.4f, radius * 1.4f, new Color(1f, 0.3f, 0f, 0.8f));
+
+            // 2. Comic "BOOM!" text
+            DamageNumbers.SpawnFloatText((Vector3)pos + Vector3.up * 30f, "💥 BOOM! 💥", new Color(1f, 0.8f, 0f), big: true);
+
+            // 3. Smoke puffs to form the skull/dust shape
+            int smokeCount = 8;
+            for (int i = 0; i < smokeCount; i++)
+            {
+                float angle = (360f / smokeCount) * i * Mathf.Deg2Rad;
+                Vector2 offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (radius * 0.5f);
+                var puff = CreateCircleGO($"BoomSmoke_{i}", pos + offset, radius * 0.6f, new Color(0.2f, 0.2f, 0.25f, 0.7f), 9, duration * 1.2f);
+                puff.AddComponent<FadeScaleAnim>().Init(duration * 1.2f, radius * 0.3f, radius * 0.8f, new Color(0.15f, 0.15f, 0.18f, 0.7f));
+            }
+        }
+
+        // ── Portal (purple elip spinning gate) ────────────────────
+        public static void SpawnPortal(Vector2 pos, float duration)
+        {
+            var go = new GameObject("PortalVFX");
+            go.transform.position = pos;
+            go.transform.localScale = new Vector3(80f, 40f, 1f);
+
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = MakeCircleSprite(new Color(0.5f, 0f, 0.8f, 0.6f));
+            sr.sortingOrder = 3; // ground layer
+
+            // Outline ring
+            var ring = new GameObject("PortalRing");
+            ring.transform.SetParent(go.transform, false);
+            var ringSr = ring.AddComponent<SpriteRenderer>();
+            ringSr.sprite = MakeCircleSprite(new Color(0.8f, 0.2f, 1f, 0.9f));
+            ringSr.sortingOrder = 4;
+            ring.transform.localScale = Vector3.one * 0.9f;
+
+            var anim = go.AddComponent<PortalAnim>();
+            anim.Init(duration);
+        }
+
         // ── Internal circle factory ───────────────────────────────
         private static GameObject CreateCircleGO(string name, Vector3 pos, float size, Color color, int order, float life)
         {
@@ -287,6 +373,51 @@ namespace AngelArena.Core
             if (_target) transform.position = _target.position;
             _elapsed += Time.deltaTime;
             if (_elapsed >= _life) Destroy(gameObject);
+        }
+    }
+
+    public class PortalAnim : MonoBehaviour
+    {
+        private float _life, _elapsed;
+        private Vector3 _baseScale;
+        private SpriteRenderer[] _srs;
+
+        private void Awake()
+        {
+            _baseScale = transform.localScale;
+            _srs = GetComponentsInChildren<SpriteRenderer>();
+        }
+
+        public void Init(float life)
+        {
+            _life = life;
+        }
+
+        private void Update()
+        {
+            _elapsed += Time.deltaTime;
+            float t = _elapsed / _life;
+
+            // Rotate
+            transform.Rotate(0f, 0f, 90f * Time.deltaTime);
+
+            // Pulse scale & fade out
+            float pulse = 1f + 0.08f * Mathf.Sin(Time.time * 6f);
+            transform.localScale = _baseScale * (pulse * Mathf.Lerp(1f, 0f, t));
+
+            foreach (var sr in _srs)
+            {
+                if (sr != null)
+                {
+                    Color c = sr.color;
+                    sr.color = new Color(c.r, c.g, c.b, Mathf.Lerp(c.a, 0f, t));
+                }
+            }
+
+            if (_elapsed >= _life)
+            {
+                Destroy(gameObject);
+            }
         }
     }
 }

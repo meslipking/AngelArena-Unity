@@ -14,6 +14,9 @@ namespace AngelArena.Core
         public static EnemySpawner Instance { get; private set; }
         public static List<EnemyController> AllEnemies { get; } = new();
 
+        [HideInInspector]
+        public bool autoVacuumActive = false;
+
         [Header("Enemy Prefabs — assign in Inspector")]
         public EnemyPool[] enemyPools;  // Each pool: data + prefab
 
@@ -119,6 +122,10 @@ namespace AngelArena.Core
             if (bPool != null)
             {
                 Vector2 spawnPos = GetSpawnPosition();
+                // Spawn purple spinning portal
+                SkillVFX.SpawnPortal(spawnPos, 1.5f);
+                yield return new WaitForSeconds(1.0f); // wait for portal spin intro
+
                 SpawnEnemy(new EnemyPool { data = bPool.data, prefab = bPool.prefab },
                     spawnPos, _currentWave.hpMult, _currentWave.dmgMult, false, true);
             }
@@ -144,6 +151,18 @@ namespace AngelArena.Core
             if (enemyPools == null || enemyPools.Length == 0) return null;
             // For now: random pick, can be refined with wave-based weights
             return enemyPools[Random.Range(0, enemyPools.Length)];
+        }
+
+        public void TriggerVacuum(float duration)
+        {
+            StartCoroutine(VacuumCoroutine(duration));
+        }
+
+        private IEnumerator VacuumCoroutine(float duration)
+        {
+            autoVacuumActive = true;
+            yield return new WaitForSeconds(duration);
+            autoVacuumActive = false;
         }
 
         private void OnDestroy() => AllEnemies.Clear();

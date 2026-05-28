@@ -16,6 +16,21 @@ namespace AngelArena.Save
         private string SavePath => Path.Combine(Application.persistentDataPath, SAVE_FILE);
 
         [System.Serializable]
+        public class PowerupsState
+        {
+            public int might     = 0;
+            public int amount    = 0;
+            public int swiftness = 0;
+            public int recovery  = 0;
+            public int greed     = 0;
+            public int luck      = 0;
+            public int cooldown  = 0;
+            public int vitality  = 0;
+            public int growth    = 0;
+            public int magnet    = 0;
+        }
+
+        [System.Serializable]
         public class SaveData
         {
             public int    totalPlaytimeSec;
@@ -30,6 +45,10 @@ namespace AngelArena.Save
             public int    sfxVolume    = 100;
             public int    musicVolume  = 80;
             public bool   fullscreen   = true;
+
+            // PVE Powerup & Currency sync
+            public int            gold = 0;
+            public PowerupsState  powerups = new PowerupsState();
         }
 
         public SaveData CurrentSave { get; private set; } = new();
@@ -96,11 +115,17 @@ namespace AngelArena.Save
         // ── Update after session ─────────────────────────────────
         public void RecordSession(int survivalSec, int kills, int level, string charId, int charIndex)
         {
+            RecordSession(survivalSec, kills, level, charId, charIndex, 0);
+        }
+
+        public void RecordSession(int survivalSec, int kills, int level, string charId, int charIndex, int goldEarned)
+        {
             CurrentSave.totalPlaytimeSec  += survivalSec;
             CurrentSave.totalKillsAllTime += kills;
             CurrentSave.bestSurvivalSec    = Math.Max(CurrentSave.bestSurvivalSec, survivalSec);
             CurrentSave.highestLevel       = Math.Max(CurrentSave.highestLevel, level);
             CurrentSave.lastPlayedCharId   = charId;
+            CurrentSave.gold              += goldEarned;
 
             if (charIndex >= 0 && charIndex < CurrentSave.characterPlayCount.Length)
                 CurrentSave.characterPlayCount[charIndex]++;

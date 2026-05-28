@@ -32,6 +32,7 @@ namespace AngelArena.UI
         public Button playButton;
         public Button settingsButton;
         public Button quitButton;
+        public Button powerupButton;
 
         [Header("Panels")]
         public GameObject settingsPanel;
@@ -45,6 +46,32 @@ namespace AngelArena.UI
             playButton?.onClick.AddListener(StartGame);
             settingsButton?.onClick.AddListener(OpenSettings);
             quitButton?.onClick.AddListener(Application.Quit);
+
+            if (powerupButton != null)
+            {
+                powerupButton.onClick.AddListener(OpenPowerups);
+            }
+            else
+            {
+                // Procedurally clone the Settings button to provide an Upgrades button
+                if (settingsButton != null)
+                {
+                    var upgradesBtnGO = Instantiate(settingsButton.gameObject, settingsButton.transform.parent);
+                    upgradesBtnGO.name = "UpgradesButton";
+                    var txt = upgradesBtnGO.GetComponentInChildren<Text>();
+                    if (txt != null) txt.text = "Cường Hóa ⚡";
+                    var rect = upgradesBtnGO.GetComponent<RectTransform>();
+                    if (rect != null)
+                    {
+                        var settingsRect = settingsButton.GetComponent<RectTransform>();
+                        // Place it slightly above or next to the settings button
+                        rect.anchoredPosition = settingsRect.anchoredPosition + new Vector2(0f, 50f);
+                    }
+                    var btn = upgradesBtnGO.GetComponent<Button>();
+                    btn.onClick.RemoveAllListeners();
+                    btn.onClick.AddListener(OpenPowerups);
+                }
+            }
 
             for (int i = 0; i < charButtons.Length; i++)
             {
@@ -96,6 +123,11 @@ namespace AngelArena.UI
         public void OpenSettings()
         {
             if (settingsPanel) settingsPanel.SetActive(!settingsPanel.activeSelf);
+        }
+
+        public void OpenPowerups()
+        {
+            LobbyPowerupUI.Show();
         }
     }
 }

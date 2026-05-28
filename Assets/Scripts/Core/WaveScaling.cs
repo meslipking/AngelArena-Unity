@@ -55,13 +55,21 @@ namespace AngelArena.Core
         /// <summary>XP required to level up from the given level.</summary>
         public static int GetXpToNext(int level)
         {
-            int base_ = level <= 20
-                ? 14 + (level - 1) * 7
-                : level <= 40
-                    ? 14 + 19 * 7 + (level - 20) * 9
-                    : 14 + 19 * 7 + 20 * 9 + (level - 40) * 11;
+            int base_ = 20;
+            if (level <= 20)
+            {
+                base_ = 20 + (level - 1) * 10;
+            }
+            else if (level <= 40)
+            {
+                base_ = 20 + 190 + (level - 20) * 13;
+            }
+            else
+            {
+                base_ = 20 + 190 + 260 + (level - 40) * 16;
+            }
 
-            if (level == 20 || level == 40) base_ = Mathf.RoundToInt(base_ * 2f);
+            if (level == 20 || level == 40) base_ = Mathf.RoundToInt(base_ * 3f);
             return base_;
         }
     }

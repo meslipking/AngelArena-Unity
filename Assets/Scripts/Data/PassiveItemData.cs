@@ -5,7 +5,8 @@ namespace AngelArena.Data
     public enum PassiveEffect
     {
         DamageMult, DefMult, MaxHpMult, SpeedMult, CooldownMult,
-        AoeMult, LifeSteal, XpGainMult, GoldMult, CritChance, HpRegen
+        AoeMult, LifeSteal, XpGainMult, GoldMult, CritChance, HpRegen,
+        MagnetRadius
     }
 
     [CreateAssetMenu(fileName = "New Passive Item", menuName = "AngelArena/Passive Item")]
