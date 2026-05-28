@@ -73,7 +73,7 @@ namespace AngelArena.UI
             if (Instance == null)
             {
                 // Create instance dynamically inside active Canvas
-                var canvas = FindFirstObjectByType<Canvas>();
+                var canvas = FindAnyObjectByType<Canvas>();
                 if (canvas == null)
                 {
                     var canvasGO = new GameObject("Canvas");

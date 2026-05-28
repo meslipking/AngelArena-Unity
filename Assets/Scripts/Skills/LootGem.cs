@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using AngelArena.Core;
+using AngelArena.Audio;
 
 namespace AngelArena.Skills
 {
@@ -9,33 +10,31 @@ namespace AngelArena.Skills
         public string gemType = "xp_orb"; // xp_orb, gold_orb
         public string gemTier = "small";  // small, medium, large, boss
         public int    value   = 1;
-
+ 
         private Transform      _player;
         private SpriteRenderer _sr;
         private Vector2        _velocity;
-        private bool           _attracted;
         private float          _pulseTimer;
-
+ 
         // Visual properties based on tier
         private Color _color;
         private float _size;
-
+ 
         private void Start()
         {
             var pGO = GameObject.FindWithTag("Player");
             if (pGO != null) _player = pGO.transform;
-
+ 
             _sr = gameObject.GetComponent<SpriteRenderer>();
             if (_sr == null) _sr = gameObject.AddComponent<SpriteRenderer>();
-
+ 
             SetupVisuals();
-
+ 
             // Random initial pop-out velocity
             float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
             float speed = UnityEngine.Random.Range(45f, 65f);
             _velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
-            _attracted = false;
-
+ 
             _pulseTimer = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
         }
 
@@ -107,7 +106,6 @@ namespace AngelArena.Skills
 
             if (shouldPull)
             {
-                _attracted = true;
                 float speedBase = autoVacuum ? 850f : 240f;
                 // Speeds up as it gets closer
                 float spd = speedBase + (1f - Mathf.Clamp01(dist / magnetRadius)) * 520f;

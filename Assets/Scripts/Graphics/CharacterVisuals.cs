@@ -65,6 +65,7 @@ namespace AngelArena.Graphics
         private float          _hitTimer;
         private float          _lastHp = -1f;
         private Vector2        _eyeLookDir;
+        private Transform      _playerTr;
 
         // State caching
         private string _lastBranch;
@@ -91,6 +92,9 @@ namespace AngelArena.Graphics
             DetermineScale();
             RebuildVisualHierarchy();
             UpdateVisualSkin();
+
+            var pGO = GameObject.FindWithTag("Player");
+            if (pGO != null) _playerTr = pGO.transform;
 
             // Disable parent SpriteRenderer to avoid blocking/clashing with 2.5D visual components
             var parentSR = GetComponent<SpriteRenderer>();
