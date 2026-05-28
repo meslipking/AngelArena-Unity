@@ -50,7 +50,6 @@ namespace AngelArena.Editor
             camGO.tag            = "MainCamera";
             camGO.AddComponent<AudioListener>();
             camGO.AddComponent<CameraController>();
-            camGO.AddComponent<AngelArena.Graphics.CameraFX>(); // damage flash
             SetPos(camGO, new Vector3(0, 0, -10));
 
             // ── 2. Directional Light (ambient) ─────────────────────

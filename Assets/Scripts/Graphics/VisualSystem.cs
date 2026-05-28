@@ -586,7 +586,6 @@ namespace AngelArena.Graphics
             _spawner.spawnDistMax = SPAWN_MAX;
         }
 
-        // ══ Enemy Visual Loop ═════════════════════════════════════
         private IEnumerator EnemyVisualLoop()
         {
             while (true)
@@ -595,7 +594,7 @@ namespace AngelArena.Graphics
                 foreach (var enemy in enemies)
                 {
                     if (enemy == null) continue;
-                    int id = enemy.GetInstanceID();
+                    int id = enemy.GetHashCode();
                     if (_visualizedEnemies.Contains(id)) continue;
                     _visualizedEnemies.Add(id);
                     ApplyEnemyVisuals(enemy);
