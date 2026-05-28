@@ -250,8 +250,4 @@ namespace AngelArena.Core
             transform.Rotate(0f, 0f, speed * Time.deltaTime);
         }
     }
-    }
-
-    // NOTE: SkillVFX, DamageNumbers, BurstAnim, etc. → defined in VFXSystem.cs
-    // NOTE: DamageType enum → defined in SkillHandlers.cs
 }
